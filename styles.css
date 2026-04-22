@@ -1,0 +1,325 @@
+:root{
+  --bg-deep: #05080e;
+  --bg-water: #0a1420;
+  --bg-water2: #0d1b2e;
+  --coast: #3a2e1f;
+  --coast-edge: #5a4424;
+  --hud: #0e1722;
+  --hud-border: rgba(0, 220, 180, 0.35);
+  --accent: #00ffaa;
+  --accent-dim: #00b380;
+  --danger: #ff3355;
+  --danger-glow: #ff5577;
+  --warning: #ffb020;
+  --shield: #58c8ff;
+  --speed: #ffd84a;
+  --repair: #5aff8a;
+  --text: #e8f4ff;
+  --text-dim: #7a8aa0;
+  --text-mono: #9ad8c6;
+  --grid: rgba(0, 255, 170, 0.06);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;color:var(--text);font-family:'Noto Sans KR', sans-serif;}
+body{
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 0%, #0d1a2e 0%, #000 70%), #000;
+  touch-action:none;overscroll-behavior:none;
+}
+#gameWrap{
+  position:relative;
+  width:100vmin;height:calc(100vmin * 16/9);
+  max-width:calc(100vh * 9/16);max-height:100vh;
+  background:var(--bg-deep);overflow:hidden;
+  box-shadow: 0 0 60px rgba(0,255,170,0.08), 0 0 120px rgba(0,0,0,0.8) inset;
+  border: 1px solid rgba(0,255,170,0.12);
+}
+canvas{display:block;width:100%;height:100%;position:absolute;inset:0;}
+.scan-overlay{
+  position:absolute;inset:0;pointer-events:none;z-index:5;
+  background:repeating-linear-gradient(0deg, rgba(0,255,170,0.03) 0px, rgba(0,255,170,0.03) 1px, transparent 1px, transparent 3px);
+  mix-blend-mode:screen;opacity:0.5;
+}
+.vignette{
+  position:absolute;inset:0;pointer-events:none;z-index:6;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.5) 100%);
+}
+
+/* ===== HUD ===== */
+#hud{
+  position:absolute;inset:0;pointer-events:none;z-index:10;
+  display:flex;flex-direction:column;justify-content:space-between;padding:14px 14px 16px;
+}
+.hud-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.hud-panel{
+  background:linear-gradient(180deg, rgba(14,23,34,0.85), rgba(14,23,34,0.6));
+  border:1px solid var(--hud-border);padding:8px 12px;backdrop-filter: blur(4px);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+}
+.hp-block{min-width:140px;}
+.hp-label{
+  font-family:'Share Tech Mono', monospace;font-size:10px;color:var(--accent);letter-spacing:2px;
+  display:flex;justify-content:space-between;margin-bottom:4px;
+}
+.hp-label span:last-child{color:var(--text);}
+.hp-bar{
+  width:100%;height:8px;background:rgba(0,0,0,0.6);border:1px solid rgba(0,255,170,0.2);
+  position:relative;overflow:hidden;
+}
+.hp-fill{
+  height:100%;background:linear-gradient(90deg, var(--accent), var(--accent-dim));
+  transition:width 0.2s, background 0.3s;box-shadow: 0 0 10px var(--accent);
+}
+.hp-fill.mid{background:linear-gradient(90deg, var(--warning), #ff8822);box-shadow:0 0 10px var(--warning);}
+.hp-fill.low{background:linear-gradient(90deg, var(--danger), #ff5566);box-shadow:0 0 10px var(--danger);animation:hpPulse 0.5s infinite;}
+@keyframes hpPulse{0%,100%{opacity:1}50%{opacity:0.6}}
+
+.score-block{text-align:right;min-width:120px;}
+.score-label{font-family:'Share Tech Mono', monospace;font-size:9px;color:var(--text-dim);letter-spacing:2px;}
+.score-value{
+  font-family:'Rajdhani', sans-serif;font-weight:700;font-size:22px;color:var(--text);
+  line-height:1;margin-top:2px;text-shadow: 0 0 12px rgba(0,255,170,0.4);
+}
+.stage-value{font-family:'Share Tech Mono', monospace;font-size:11px;color:var(--accent);letter-spacing:1.5px;margin-top:4px;}
+
+/* Buff row */
+.buff-row{
+  display:flex;gap:6px;margin-top:10px;justify-content:center;
+}
+.buff-pill{
+  display:flex;align-items:center;gap:4px;
+  padding:3px 8px 3px 6px;
+  background:rgba(14,23,34,0.85);
+  border:1px solid rgba(0,255,170,0.3);
+  font-family:'Share Tech Mono', monospace;font-size:10px;
+  letter-spacing:1px;color:var(--text);
+  clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
+}
+.buff-pill.shield{border-color:var(--shield);color:var(--shield);box-shadow:0 0 10px rgba(88,200,255,0.3);}
+.buff-pill.speed {border-color:var(--speed); color:var(--speed); box-shadow:0 0 10px rgba(255,216,74,0.3);}
+.buff-icon{font-size:12px;}
+
+.hud-bottom{display:flex;justify-content:space-between;align-items:flex-end;}
+.combo-badge{
+  font-family:'Black Ops One', cursive;font-size:18px;color:var(--warning);
+  text-shadow: 0 0 15px var(--warning), 0 2px 0 #000;letter-spacing:1px;
+  opacity:0;transform:scale(0.5);transition: all 0.15s;
+}
+.combo-badge.show{opacity:1;transform:scale(1);}
+.distance-block{
+  background:rgba(0,0,0,0.5);border:1px solid rgba(0,255,170,0.2);padding:4px 10px;
+  font-family:'Share Tech Mono', monospace;font-size:10px;color:var(--text-mono);letter-spacing:1.5px;
+}
+
+/* ===== Boss HUD ===== */
+.boss-hud{
+  position:absolute;left:14px;right:14px;top:78px;z-index:11;
+  pointer-events:none;display:none;
+}
+.boss-hud.active{display:block;}
+.boss-label{
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Black Ops One', cursive;font-size:12px;color:var(--danger);
+  letter-spacing:3px;margin-bottom:4px;text-shadow:0 0 8px var(--danger);
+}
+.boss-label .name{color:#fff;font-size:11px;letter-spacing:2px;}
+.boss-bar{
+  width:100%;height:10px;background:rgba(0,0,0,0.75);
+  border:1px solid var(--danger);position:relative;overflow:hidden;
+  box-shadow:0 0 14px rgba(255,51,85,0.4);
+}
+.boss-fill{
+  height:100%;background:linear-gradient(90deg,#ff1a3a 0%,#ff5566 50%, #ffaa66 100%);
+  transition:width 0.25s;
+}
+.boss-sub{
+  display:flex;justify-content:space-between;margin-top:2px;
+  font-family:'Share Tech Mono', monospace;font-size:9px;color:var(--text-dim);letter-spacing:2px;
+}
+.boss-sub .outrun{color:var(--accent);}
+
+/* ===== Overlays ===== */
+.overlay{
+  position:absolute;inset:0;z-index:20;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background: radial-gradient(ellipse at center, rgba(5,10,20,0.85) 0%, rgba(0,0,0,0.95) 80%);
+  backdrop-filter: blur(6px);padding:40px 24px;text-align:center;
+}
+.overlay.hidden{display:none;}
+
+.title{
+  font-family:'Black Ops One', cursive;font-size:42px;color:var(--text);
+  text-shadow: 0 0 20px var(--accent), 0 0 40px rgba(0,255,170,0.3);
+  letter-spacing:2px;line-height:1;margin-bottom:4px;
+}
+.subtitle{
+  font-family:'Share Tech Mono', monospace;font-size:12px;color:var(--accent);letter-spacing:4px;margin-bottom:36px;
+}
+.title-kr{
+  font-family:'Noto Sans KR', sans-serif;font-weight:900;font-size:22px;color:var(--warning);
+  letter-spacing:6px;margin-top:-2px;margin-bottom:10px;text-shadow: 0 0 10px rgba(255,176,32,0.4);
+}
+.desc{
+  font-family:'Noto Sans KR', sans-serif;font-size:13px;color:var(--text-dim);line-height:1.7;
+  max-width:280px;margin-bottom:30px;
+}
+.desc strong{color:var(--accent);font-weight:500;}
+.desc .k-shield{color:var(--shield);font-weight:500;}
+.desc .k-speed {color:var(--speed);font-weight:500;}
+.desc .k-repair{color:var(--repair);font-weight:500;}
+
+.btn{
+  font-family:'Rajdhani', sans-serif;font-weight:700;font-size:16px;letter-spacing:3px;
+  color:var(--bg-deep);background:var(--accent);border:none;padding:14px 44px;
+  cursor:pointer;position:relative;
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  transition: transform 0.1s, box-shadow 0.2s;box-shadow: 0 0 20px rgba(0,255,170,0.4);
+  min-width:180px;
+}
+.btn:hover,.btn:active{transform:translateY(1px);box-shadow:0 0 30px rgba(0,255,170,0.6);}
+.btn.secondary{
+  background:transparent;color:var(--accent);border:1px solid var(--accent);
+  padding:12px 32px;font-size:13px;margin-top:14px;clip-path:none;box-shadow:none;min-width:140px;
+}
+.btn.secondary:hover{background:rgba(0,255,170,0.1);}
+.btn.danger{background:var(--danger);color:#fff;box-shadow:0 0 20px rgba(255,51,85,0.5);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+.best-score{
+  font-family:'Share Tech Mono', monospace;font-size:11px;color:var(--text-dim);letter-spacing:2px;margin-top:28px;
+}
+.best-score b{color:var(--accent);font-weight:normal;}
+.captain-tag{
+  font-family:'Share Tech Mono', monospace;font-size:10px;color:var(--text-dim);letter-spacing:2px;margin-top:6px;
+}
+.captain-tag a{color:var(--accent);text-decoration:none;cursor:pointer;}
+.captain-tag a:hover{text-decoration:underline;}
+
+/* Stage transition */
+#stageOverlay{background:none;backdrop-filter:none;pointer-events:none;}
+.stage-card{
+  background:rgba(10,20,34,0.92);border:1px solid var(--accent);padding:24px 40px;
+  box-shadow: 0 0 50px rgba(0,255,170,0.3), 0 0 0 4px rgba(0,0,0,0.6);
+  clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  animation: stageSlide 0.4s cubic-bezier(0.2,0.8,0.2,1);
+}
+.stage-card.boss{border-color:var(--danger);box-shadow:0 0 50px rgba(255,51,85,0.5), 0 0 0 4px rgba(0,0,0,0.6);animation: stageSlide 0.4s cubic-bezier(0.2,0.8,0.2,1), bossShake 0.1s 6;}
+@keyframes bossShake{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+@keyframes stageSlide{from{transform:translateX(-60px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+.stage-num{font-family:'Share Tech Mono', monospace;font-size:11px;color:var(--accent);letter-spacing:4px;}
+.stage-card.boss .stage-num{color:var(--danger);}
+.stage-name{
+  font-family:'Black Ops One', cursive;font-size:26px;color:var(--text);letter-spacing:1px;
+  margin-top:4px;text-shadow:0 0 15px var(--accent);
+}
+.stage-card.boss .stage-name{text-shadow:0 0 15px var(--danger);}
+.stage-desc{font-family:'Noto Sans KR', sans-serif;font-size:12px;color:var(--warning);margin-top:6px;}
+
+.game-over-title{
+  font-family:'Black Ops One', cursive;font-size:46px;color:var(--danger);
+  text-shadow: 0 0 25px var(--danger), 0 0 50px rgba(255,51,85,0.4);letter-spacing:4px;margin-bottom:6px;
+}
+.game-over-title.win{color:var(--accent);text-shadow: 0 0 25px var(--accent), 0 0 50px rgba(0,255,170,0.4);}
+.game-over-sub{font-family:'Share Tech Mono', monospace;font-size:13px;color:var(--text-dim);letter-spacing:3px;margin-bottom:28px;}
+.result-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px 28px;margin-bottom:28px;padding:20px 24px;
+  background:rgba(14,23,34,0.6);border:1px solid var(--hud-border);min-width:260px;
+}
+.result-item{text-align:left;}
+.result-label{font-family:'Share Tech Mono', monospace;font-size:9px;color:var(--text-dim);letter-spacing:2px;}
+.result-value{font-family:'Rajdhani', sans-serif;font-weight:700;font-size:20px;color:var(--text);margin-top:2px;}
+.result-value.accent{color:var(--accent);text-shadow:0 0 10px rgba(0,255,170,0.3);}
+.result-value.danger{color:var(--danger);}
+
+/* Leaderboard */
+.board{
+  width:100%;max-width:320px;border:1px solid var(--hud-border);background:rgba(10,20,34,0.6);
+  margin-bottom:20px;max-height:320px;overflow-y:auto;
+}
+.board-head{
+  display:grid;grid-template-columns:40px 1fr 90px;padding:8px 12px;
+  font-family:'Share Tech Mono', monospace;font-size:10px;color:var(--text-dim);letter-spacing:2px;
+  border-bottom:1px solid var(--hud-border);background:rgba(0,0,0,0.4);
+  position:sticky;top:0;
+}
+.board-row{
+  display:grid;grid-template-columns:40px 1fr 90px;padding:9px 12px;align-items:center;
+  border-bottom:1px solid rgba(0,255,170,0.08);
+  font-family:'Rajdhani', sans-serif;font-weight:500;font-size:14px;color:var(--text);
+}
+.board-row:last-child{border-bottom:none;}
+.board-row.me{background:rgba(0,255,170,0.08);color:var(--accent);}
+.board-row .rank{font-family:'Share Tech Mono', monospace;font-size:12px;color:var(--text-dim);}
+.board-row.me .rank{color:var(--accent);}
+.board-row .rank.top{color:var(--warning);font-weight:700;}
+.board-row .score{text-align:right;font-family:'Share Tech Mono', monospace;font-size:13px;}
+.board-empty{padding:30px;text-align:center;font-family:'Noto Sans KR', sans-serif;font-size:12px;color:var(--text-dim);}
+
+/* Name entry */
+.name-input{
+  width:100%;max-width:260px;padding:12px 16px;
+  background:rgba(14,23,34,0.85);border:1px solid var(--hud-border);
+  font-family:'Rajdhani', sans-serif;font-size:18px;color:var(--text);letter-spacing:2px;
+  text-align:center;outline:none;margin-bottom:18px;
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+}
+.name-input:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,255,170,0.3);}
+.name-input::placeholder{color:var(--text-dim);letter-spacing:2px;}
+
+/* Damage flash */
+.dmg-flash{
+  position:absolute;inset:0;z-index:8;pointer-events:none;
+  box-shadow: inset 0 0 100px rgba(255,51,85,0);transition:box-shadow 0.1s;
+}
+.dmg-flash.hit{box-shadow: inset 0 0 120px rgba(255,51,85,0.8);}
+
+.control-hint{
+  position:absolute;left:50%;top:60%;transform:translate(-50%, -50%);
+  font-family:'Share Tech Mono', monospace;font-size:11px;color:var(--accent);letter-spacing:3px;
+  opacity:0;pointer-events:none;z-index:12;animation:hintFade 2.4s ease-out forwards;
+  text-shadow: 0 0 10px rgba(0,255,170,0.6);
+}
+@keyframes hintFade{0%{opacity:0;}20%{opacity:1;}70%{opacity:1;}100%{opacity:0;transform:translate(-50%, -65%);}}
+
+.warn-banner{
+  position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+  background: linear-gradient(90deg, transparent, rgba(255,51,85,0.5), transparent);
+  padding:6px 0;text-align:center;z-index:7;pointer-events:none;
+  font-family:'Share Tech Mono', monospace;font-size:11px;color:#fff;letter-spacing:4px;opacity:0;
+}
+.warn-banner.show{animation:warnFlash 0.8s ease-out;}
+@keyframes warnFlash{0%{opacity:0;transform:translateY(-50%) scaleX(0.8);}40%{opacity:1;transform:translateY(-50%) scaleX(1);}100%{opacity:0;transform:translateY(-50%) scaleX(1);}}
+
+/* Big boss warning */
+.boss-warn{
+  position:absolute;left:0;right:0;top:42%;text-align:center;z-index:14;pointer-events:none;
+  display:none;
+}
+.boss-warn.show{display:block;animation:bossWarnShow 2.8s ease-out forwards;}
+.boss-warn .bw-big{
+  font-family:'Black Ops One', cursive;font-size:38px;color:var(--danger);letter-spacing:4px;
+  text-shadow:0 0 30px var(--danger), 0 0 60px rgba(255,51,85,0.6), 0 2px 0 #000;
+  animation:bossWarnPulse 0.3s infinite alternate;
+}
+.boss-warn .bw-sub{
+  font-family:'Share Tech Mono', monospace;font-size:13px;color:#fff;letter-spacing:5px;margin-top:8px;
+  text-shadow:0 0 10px var(--danger);
+}
+@keyframes bossWarnPulse{from{transform:scale(1);}to{transform:scale(1.04);}}
+@keyframes bossWarnShow{0%{opacity:0;}20%{opacity:1;}85%{opacity:1;}100%{opacity:0;}}
+
+.pause-btn{
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:11;pointer-events:auto;
+  width:32px;height:32px;background:rgba(14,23,34,0.7);border:1px solid var(--hud-border);
+  color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-family:'Share Tech Mono', monospace;font-size:14px;backdrop-filter:blur(4px);
+}
+.pause-btn:hover{background:rgba(0,255,170,0.1);}
+
+.tx-pill{
+  position:absolute;bottom:6px;left:6px;z-index:15;
+  font-family:'Share Tech Mono', monospace;font-size:8px;color:var(--text-dim);letter-spacing:1px;
+  padding:2px 6px;background:rgba(0,0,0,0.5);border:1px solid rgba(0,255,170,0.15);pointer-events:none;
+}
+.tx-pill b{color:var(--accent);font-weight:normal;}
+.tx-pill.err b{color:var(--warning);}

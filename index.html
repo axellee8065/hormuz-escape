@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>HORMUZ ESCAPE · 호르무즈 탈출</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<div id="gameWrap">
+  <canvas id="game"></canvas>
+
+  <div class="scan-overlay"></div>
+  <div class="vignette"></div>
+  <div class="dmg-flash" id="dmgFlash"></div>
+  <div class="warn-banner" id="warnBanner">⚠  INCOMING MISSILE  ⚠</div>
+  <div class="boss-warn" id="bossWarn">
+    <div class="bw-big">⚠ WARSHIP ⚠</div>
+    <div class="bw-sub">APPROACHING · 적 구축함 접근</div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <div>
+        <div class="hud-panel hp-block">
+          <div class="hp-label"><span>HULL INTEGRITY</span><span id="hpText">100%</span></div>
+          <div class="hp-bar"><div class="hp-fill" id="hpFill" style="width:100%"></div></div>
+        </div>
+        <div class="buff-row" id="buffRow"></div>
+      </div>
+      <div class="hud-panel score-block">
+        <div class="score-label">SCORE</div>
+        <div class="score-value" id="scoreText">0</div>
+        <div class="stage-value" id="stageText">STAGE 1</div>
+      </div>
+    </div>
+    <div class="hud-bottom">
+      <div class="distance-block" id="distText">0 NM</div>
+      <div class="combo-badge" id="comboBadge">×2 COMBO</div>
+    </div>
+  </div>
+
+  <!-- Boss HUD -->
+  <div class="boss-hud" id="bossHud">
+    <div class="boss-label"><span>◆ BOSS</span><span class="name" id="bossName">IRGC DESTROYER</span><span>◆</span></div>
+    <div class="boss-bar"><div class="boss-fill" id="bossFill" style="width:100%"></div></div>
+    <div class="boss-sub"><span>HULL</span><span class="outrun" id="outrunText">OUTRUN 0%</span></div>
+  </div>
+
+  <button class="pause-btn" id="pauseBtn" style="display:none">II</button>
+
+  <!-- Menu -->
+  <div class="overlay" id="menuOverlay">
+    <div class="title">HORMUZ</div>
+    <div class="title">ESCAPE</div>
+    <div class="subtitle">// OPERATION · 2026 //</div>
+    <div class="title-kr">호르무즈 탈출</div>
+    <div class="desc">
+      호르무즈 해협을 돌파하라. <strong>기뢰</strong>, <strong>RPG 보트</strong>,
+      <strong>해안 미사일</strong>을 피하고 보급 컨테이너에서
+      <span class="k-shield">실드</span> · <span class="k-speed">가속</span> · <span class="k-repair">수리</span>를 확보하라.
+      Stage 5 끝에는 <strong style="color:var(--danger)">적 구축함</strong>이 기다린다.
+    </div>
+    <button class="btn" id="startBtn">⏵ START MISSION</button>
+    <button class="btn secondary" id="boardBtn">LEADERBOARD</button>
+    <div class="best-score">BEST · <b id="bestScore">0</b></div>
+    <div class="captain-tag">CAPTAIN · <a id="captainName">ANONYMOUS</a></div>
+  </div>
+
+  <!-- Name Entry -->
+  <div class="overlay hidden" id="nameOverlay">
+    <div class="title" style="font-size:32px;">CAPTAIN ID</div>
+    <div class="subtitle">// REGISTER //</div>
+    <div class="desc">랭킹 등록에 사용할 이름을 입력하세요.</div>
+    <input type="text" class="name-input" id="nameInput" placeholder="ENTER NAME" maxlength="18" autocomplete="off" />
+    <button class="btn" id="nameSaveBtn">⏵ CONFIRM</button>
+  </div>
+
+  <!-- Stage transition -->
+  <div class="overlay hidden" id="stageOverlay">
+    <div class="stage-card" id="stageCard">
+      <div class="stage-num" id="stageNum">STAGE 01</div>
+      <div class="stage-name" id="stageName">STRAIT ENTRY</div>
+      <div class="stage-desc" id="stageDesc">기뢰 지대 진입 · 회피 기동 개시</div>
+    </div>
+  </div>
+
+  <!-- Game Over -->
+  <div class="overlay hidden" id="overOverlay">
+    <div class="game-over-title" id="goverTitle">SUNK</div>
+    <div class="game-over-sub" id="goverSub">// MISSION FAILED //</div>
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="result-label">FINAL SCORE</div>
+        <div class="result-value accent" id="finalScore">0</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">DISTANCE</div>
+        <div class="result-value" id="finalDist">0 NM</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">STAGE REACHED</div>
+        <div class="result-value" id="finalStage">1</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">RANK</div>
+        <div class="result-value danger" id="finalRank">--</div>
+      </div>
+    </div>
+    <button class="btn" id="retryBtn">⟳ RETRY</button>
+    <button class="btn secondary" id="showBoardBtn">VIEW RANKING</button>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="overlay hidden" id="boardOverlay">
+    <div class="title" style="font-size:32px;">LEADERBOARD</div>
+    <div class="subtitle">// TOP TANKERS //</div>
+    <div class="board" id="boardList">
+      <div class="board-head"><span>#</span><span>CAPTAIN</span><span>SCORE</span></div>
+      <div class="board-empty">Loading...</div>
+    </div>
+    <button class="btn secondary" id="closeBoardBtn">BACK</button>
+  </div>
+
+  <div class="tx-pill" id="txPill">BACKEND · <b>OFFLINE</b></div>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
