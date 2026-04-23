@@ -135,9 +135,10 @@ export function update(dt){
   for (const ms of missiles){
     if (ms.homing > 0){
       const d = Math.hypot(player.x-ms.x, player.y-ms.y)||1;
-      const steer = 0.12;
-      ms.vx = ms.vx*(1-steer) + ((player.x-ms.x)/d)*3.0*steer;
-      ms.vy = ms.vy*(1-steer) + ((player.y-ms.y)/d)*3.0*steer;
+      const steer  = ms.fromBoss ? 0.18 : 0.12;
+      const maxSpd = ms.fromBoss ? 3.8  : 3.0;
+      ms.vx = ms.vx*(1-steer) + ((player.x-ms.x)/d)*maxSpd*steer;
+      ms.vy = ms.vy*(1-steer) + ((player.y-ms.y)/d)*maxSpd*steer;
       ms.homing--;
     } else ms.vy += 0.03;
     ms.x += ms.vx; ms.y += ms.vy;

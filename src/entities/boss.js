@@ -47,14 +47,14 @@ function bossPickAttack(){
 }
 
 function bossFireVolley(){
-  const count = 5;
+  const count = 7;
   for (let i=0;i<count;i++){
-    const spread = (i - (count-1)/2) * 0.25;
+    const spread = (i - (count-1)/2) * 0.20;
     const ang = Math.PI/2 + spread + rand(-0.05,0.05);
     missiles.push({
-      x: boss.x + (i-2)*18, y: boss.y + boss.h/2 - 10,
-      vx: Math.cos(ang)*2.3, vy: Math.sin(ang)*2.3,
-      life: 300, homing: 45, trail: [], fromBoss:true
+      x: boss.x + (i - (count-1)/2)*18, y: boss.y + boss.h/2 - 10,
+      vx: Math.cos(ang)*3.2, vy: Math.sin(ang)*3.2,
+      life: 320, homing: 75, trail: [], fromBoss:true
     });
   }
   for (let i=0;i<24;i++){
