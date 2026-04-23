@@ -7,6 +7,7 @@ import { clamp, dist2, rand, randi } from '../util.js';
 import { input, keys } from '../input.js';
 import { hitPlayer, addCombo } from '../entities/player.js';
 import { addExplosion, addWake } from './fx.js';
+import { sfx } from './audio.js';
 import { applyPowerup } from '../entities/powerup.js';
 import { spawnMine, spawnBoat, spawnRpgBoat, spawnCoastMissile, spawnRpgShot, spawnPowerUp } from './spawn.js';
 import { updateBoss, triggerBoss } from '../entities/boss.js';
@@ -90,6 +91,7 @@ export function update(dt){
     if (dsq < rr*rr){
       m.alive = false;
       addExplosion(m.x, m.y, 1.2, '255,80,60');
+      sfx.mineBoom(1.2);
       hitPlayer(28);
     } else if (dsq < 80*80 && !m.nearMiss) m.nearMiss = true;
     if (m.y > H+40 && !m.counted){
@@ -119,6 +121,7 @@ export function update(dt){
     if (dsq < 48*48){
       b.hp = 0;
       addExplosion(b.x, b.y, 0.9, '255,110,60');
+      sfx.explosion(0.9);
       hitPlayer(18);
     } else if (dsq < 100*100 && !b.nearMiss) b.nearMiss = true;
     if (b.y > H+60 && !b.counted){
@@ -149,7 +152,10 @@ export function update(dt){
         r:rand(2,4), life:24, max:24, color:'200,200,210', smoke:true});
     }
     if (dist2(ms.x,ms.y,player.x,player.y) < 28*28){
-      ms.life = 0; addExplosion(ms.x, ms.y, 1.5, '255,70,60'); hitPlayer(ms.fromBoss?50:40);
+      ms.life = 0;
+      addExplosion(ms.x, ms.y, 1.5, '255,70,60');
+      sfx.explosion(1.5);
+      hitPlayer(ms.fromBoss?50:40);
     }
   }
   for (let i=missiles.length-1;i>=0;i--) if (missiles[i].life<=0 || missiles[i].x<-40 || missiles[i].x>W+40 || missiles[i].y>H+40) missiles.splice(i,1);
@@ -160,7 +166,10 @@ export function update(dt){
     r.trail.push({x:r.x,y:r.y}); if (r.trail.length>10) r.trail.shift();
     r.life--;
     if (dist2(r.x,r.y,player.x,player.y) < 22*22){
-      r.life=0; addExplosion(r.x,r.y, 0.9, '255,150,60'); hitPlayer(22);
+      r.life=0;
+      addExplosion(r.x,r.y, 0.9, '255,150,60');
+      sfx.explosion(0.9);
+      hitPlayer(22);
     }
   }
   for (let i=rpgs.length-1;i>=0;i--){const r=rpgs[i]; if (r.life<=0 || r.y>H+30 || r.y<-30 || r.x<-30 || r.x>W+30) rpgs.splice(i,1);}
@@ -184,6 +193,7 @@ export function update(dt){
       if (tg.timer <= 0){
         tg.exploded = true;
         addExplosion(tg.x, tg.y, 2.2, '255,80,50');
+        sfx.deckgunBoom();
         if (dist2(tg.x, tg.y, player.x, player.y) < (tg.maxR+18)*(tg.maxR+18)){
           hitPlayer(55);
         }

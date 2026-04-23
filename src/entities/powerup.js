@@ -1,6 +1,7 @@
 import { state, player, particles } from '../state.js';
 import { rand } from '../util.js';
 import { addFloatText } from '../systems/fx.js';
+import { sfx } from '../systems/audio.js';
 
 export function applyPowerup(kind){
   if (kind === 'shield'){
@@ -14,6 +15,7 @@ export function applyPowerup(kind){
     addFloatText(player.x, player.y-20, '+30 HULL', '#5aff8a');
   }
   state.score += 200;
+  sfx.pickup(kind);
   for (let i=0;i<14;i++){
     const a=rand(0,Math.PI*2), s=rand(1,3);
     const color = kind==='shield'?'120,200,255':kind==='speed'?'255,216,74':'120,255,160';

@@ -1,6 +1,7 @@
 import { state, player, boss, mines, missiles, telegraphs, particles } from '../state.js';
 import { W, H, PLAY_L, PLAY_R, getStage } from '../config.js';
 import { rand, clamp } from '../util.js';
+import { sfx } from '../systems/audio.js';
 
 let victoryCallback = null;
 export function setVictoryCallback(cb){ victoryCallback = cb; }
@@ -18,6 +19,7 @@ export function triggerBoss(){
 
   const bw = document.getElementById('bossWarn');
   bw.classList.add('show');
+  sfx.bossWarn();
   setTimeout(()=>bw.classList.remove('show'), 2900);
 
   const card = document.getElementById('stageCard');
@@ -62,6 +64,7 @@ function bossFireVolley(){
     particles.push({x: boss.x+rand(-40,40), y: boss.y+boss.h/2-10, vx:Math.cos(a)*rand(1,4), vy:Math.sin(a)*rand(1,4),
       r:rand(2,5), life:20, max:20, color:'255,180,80'});
   }
+  sfx.missileLaunch(true);
   state.shake = Math.min(14, state.shake+3);
 }
 
@@ -82,6 +85,7 @@ function bossFireDeckgun(){
   const tx = clamp(player.x + player.vx*12, PLAY_L+30, PLAY_R-30);
   const ty = clamp(player.y + rand(-40,40), 200, H-120);
   telegraphs.push({ x:tx, y:ty, r:0, maxR:80, timer:90, exploded:false });
+  sfx.deckgunCharge();
 }
 
 export function updateBoss(dt){

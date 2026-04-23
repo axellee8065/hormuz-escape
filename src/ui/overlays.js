@@ -4,6 +4,7 @@ import { LS } from '../util.js';
 import { Board } from '../net/supabase.js';
 import { TikTrix } from '../net/tiktrix.js';
 import { addExplosion } from '../systems/fx.js';
+import { sfx, toggleMute } from '../systems/audio.js';
 import { setOnDead, hitPlayer } from '../entities/player.js';
 import { setVictoryCallback } from '../entities/boss.js';
 import { setStageIntroCallback } from '../systems/collision.js';
@@ -64,6 +65,8 @@ function gameOver(){
   addExplosion(player.x, player.y, 2.5, '255,90,50');
   addExplosion(player.x-20, player.y-30, 1.8, '255,200,100');
   addExplosion(player.x+15, player.y+20, 1.8, '255,160,80');
+  sfx.explosion(2.5);
+  sfx.gameOver();
   document.getElementById('pauseBtn').style.display = 'none';
   document.getElementById('bossHud').classList.remove('active');
   setTimeout(()=>showResults(false), 1200);
@@ -71,6 +74,7 @@ function gameOver(){
 
 function showVictory(){
   state.mode = 'victory';
+  sfx.victory();
   document.getElementById('pauseBtn').style.display = 'none';
   document.getElementById('bossHud').classList.remove('active');
   showResults(true);
@@ -219,11 +223,19 @@ export function wireUI(){
   setVictoryCallback(showVictory);
   setStageIntroCallback(triggerStageIntro);
 
-  // Dev hotkeys
+  // Dev hotkeys + mute
   addEventListener('keydown', e=>{
     if (e.code==='KeyG' && (state.mode==='playing' || state.mode==='bossBattle')) hitPlayer(999);
     if (e.code==='KeyB' && state.mode==='playing'){
       state.stageIdx=5; state.stageDist = getStage(5).dist - 20;
+    }
+    if (e.code==='KeyM'){
+      const on = !toggleMute();
+      const hint = document.createElement('div');
+      hint.className = 'control-hint';
+      hint.textContent = on ? '🔊  SOUND ON' : '🔇  SOUND OFF';
+      document.getElementById('gameWrap').appendChild(hint);
+      setTimeout(()=>hint.remove(), 1600);
     }
   });
 

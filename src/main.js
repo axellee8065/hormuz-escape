@@ -4,6 +4,7 @@ import { installInput } from './input.js';
 import { update } from './systems/collision.js';
 import { render } from './systems/render.js';
 import { wireUI } from './ui/overlays.js';
+import { initAudioOnFirstGesture } from './systems/audio.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -17,6 +18,7 @@ function resize(){
 resize(); window.addEventListener('resize', resize);
 
 installInput(canvas);
+initAudioOnFirstGesture();
 wireUI();
 
 let lastT = performance.now();

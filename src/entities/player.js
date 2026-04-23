@@ -1,5 +1,6 @@
 import { state, player, particles } from '../state.js';
 import { rand, roundRect } from '../util.js';
+import { sfx } from '../systems/audio.js';
 
 let onDeadCallback = null;
 export function setOnDead(cb){ onDeadCallback = cb; }
@@ -8,6 +9,7 @@ export function hitPlayer(dmg){
   if (state.invFrames > 0) return;
   if (state.buffs.shield > 0){
     state.shake = Math.min(12, state.shake+4);
+    sfx.shield();
     for (let i=0;i<16;i++){
       const a=rand(0,Math.PI*2);
       particles.push({x:player.x+Math.cos(a)*34, y:player.y+Math.sin(a)*60, vx:Math.cos(a)*2, vy:Math.sin(a)*2,

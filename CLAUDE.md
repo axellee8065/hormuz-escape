@@ -50,7 +50,8 @@
     │   ├── collision.js       # (현재 update.js에 인라인 — 추후 분리 훅)
     │   ├── render.js          # drawCoast, drawTanker, drawBoss 등 모든 draw 디스패처
     │   ├── hud.js             # DOM HUD 업데이트 (HP, score, buff pill, boss bar)
-    │   └── fx.js              # addExplosion, addWake, addFloatText
+    │   ├── fx.js              # addExplosion, addWake, addFloatText
+    │   └── audio.js           # Web Audio 프로시저럴 SFX + M 키 뮤트 (localStorage)
     ├── net/
     │   ├── supabase.js        # Board 어댑터 (submit/top)
     │   └── tiktrix.js         # postMessage 어댑터 (ready/start/end)
@@ -242,6 +243,7 @@ URL 파라미터 오버라이드도 지원 (로컬 디버그용):
 |---|---|
 | `G` | 즉사 (게임 오버 플로우 테스트). `playing` / `bossBattle` 에서만 작동 |
 | `B` | 스테이지 5 끝으로 점프 (보스 트리거 테스트). `playing` 에서만 |
+| `M` | 사운드 뮤트 토글 (localStorage 저장, 언제든지) |
 
 ---
 

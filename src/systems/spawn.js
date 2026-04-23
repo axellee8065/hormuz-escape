@@ -2,6 +2,7 @@ import { mines, boats, missiles, rpgs, powerups, warnings, state, player } from 
 import { PLAY_L, PLAY_R, COAST_L, COAST_R, W, H } from '../config.js';
 import { rand } from '../util.js';
 import { particles } from '../state.js';
+import { sfx } from './audio.js';
 
 export function spawnMine(){
   mines.push({x: rand(PLAY_L+30, PLAY_R-30), y:-40, r:rand(18,24), bob:rand(0,Math.PI*2), alive:true, counted:false});
@@ -14,6 +15,7 @@ export function spawnBoat(){
     vx: (fromLeft?1:-1)*rand(0.6,1.3), vy:rand(1.8,2.8),
     w:32, h:56, hp:1, fireCd: rand(2.0,3.5), isRpg:false, counted:false,
   });
+  sfx.boatEngine();
 }
 
 export function spawnRpgBoat(){
@@ -23,6 +25,7 @@ export function spawnRpgBoat(){
     vx:(fromLeft?1:-1)*rand(0.4,1.0), vy:rand(1.2,2.0),
     w:34, h:60, hp:1, fireCd: rand(1.4,2.2), isRpg:true, counted:false,
   });
+  sfx.boatEngine();
 }
 
 export function spawnCoastMissile(){
@@ -37,6 +40,7 @@ export function spawnCoastMissile(){
       vx:(fromLeft?1:-1)*2.2, vy:0.6,
       life:360, homing:60, trail:[], fromBoss:false
     });
+    sfx.missileLaunch(false);
   }, 800);
 }
 
@@ -47,6 +51,7 @@ export function spawnRpgShot(from){
     particles.push({x:from.x, y:from.y, vx:dx/d*2+rand(-1,1), vy:dy/d*2+rand(-1,1),
       r:rand(2,4), life:20, max:20, color:'255,160,80'});
   }
+  sfx.rpg();
 }
 
 export function spawnPowerUp(){
