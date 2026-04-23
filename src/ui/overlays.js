@@ -56,6 +56,7 @@ export function startGame(){
   document.getElementById('gameWrap').appendChild(hint);
   setTimeout(()=>hint.remove(), 2400);
   TikTrix.start();
+  sfx.pickup('shield');  // audible proof that audio path is alive
   state.mode = 'playing';
 }
 

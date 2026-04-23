@@ -11,18 +11,21 @@ let lastBoatAt = 0;
 function ensureCtx(){
   if (ctx) return ctx;
   const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return null;
+  if (!AC){ console.warn('[audio] AudioContext unsupported'); return null; }
   ctx = new AC();
   master = ctx.createGain();
   master.gain.value = muted ? 0 : MASTER_VOL;
   master.connect(ctx.destination);
+  console.info('[audio] ctx created, state:', ctx.state, 'sr:', ctx.sampleRate, 'muted:', muted);
   return ctx;
 }
 
 export function initAudioOnFirstGesture(){
   const start = () => {
     const c = ensureCtx();
-    if (c && c.state === 'suspended') c.resume();
+    if (c && c.state === 'suspended') {
+      c.resume().then(() => console.info('[audio] resumed, state:', c.state));
+    }
   };
   document.addEventListener('pointerdown', start, { passive: true });
   document.addEventListener('keydown', start, { passive: true });
