@@ -51,7 +51,7 @@
     │   ├── render.js          # drawCoast, drawTanker, drawBoss 등 모든 draw 디스패처
     │   ├── hud.js             # DOM HUD 업데이트 (HP, score, buff pill, boss bar)
     │   ├── fx.js              # addExplosion, addWake, addFloatText
-    │   └── audio.js           # Web Audio 프로시저럴 SFX + M 키 뮤트 (localStorage)
+    │   └── audio.js           # Web Audio 프로시저럴 SFX + BGM(normal/boss 2-track) + M 키 뮤트
     ├── net/
     │   ├── supabase.js        # Board 어댑터 (submit/top)
     │   └── tiktrix.js         # postMessage 어댑터 (ready/start/end)

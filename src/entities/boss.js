@@ -1,7 +1,7 @@
 import { state, player, boss, mines, missiles, telegraphs, particles } from '../state.js';
 import { W, H, PLAY_L, PLAY_R, getStage } from '../config.js';
 import { rand, clamp } from '../util.js';
-import { sfx } from '../systems/audio.js';
+import { sfx, startBgm } from '../systems/audio.js';
 
 let victoryCallback = null;
 export function setVictoryCallback(cb){ victoryCallback = cb; }
@@ -20,6 +20,7 @@ export function triggerBoss(){
   const bw = document.getElementById('bossWarn');
   bw.classList.add('show');
   sfx.bossWarn();
+  startBgm('boss');
   setTimeout(()=>bw.classList.remove('show'), 2900);
 
   const card = document.getElementById('stageCard');

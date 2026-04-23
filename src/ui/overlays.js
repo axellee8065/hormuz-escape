@@ -4,7 +4,7 @@ import { LS } from '../util.js';
 import { Board } from '../net/supabase.js';
 import { TikTrix } from '../net/tiktrix.js';
 import { addExplosion } from '../systems/fx.js';
-import { sfx, toggleMute } from '../systems/audio.js';
+import { sfx, toggleMute, startBgm, stopBgm, pauseBgm, resumeBgm } from '../systems/audio.js';
 import { setOnDead, hitPlayer } from '../entities/player.js';
 import { setVictoryCallback } from '../entities/boss.js';
 import { setStageIntroCallback } from '../systems/collision.js';
@@ -57,6 +57,7 @@ export function startGame(){
   setTimeout(()=>hint.remove(), 2400);
   TikTrix.start();
   sfx.pickup('shield');  // audible proof that audio path is alive
+  startBgm('normal');
   state.mode = 'playing';
 }
 
@@ -68,6 +69,7 @@ function gameOver(){
   addExplosion(player.x+15, player.y+20, 1.8, '255,160,80');
   sfx.explosion(2.5);
   sfx.gameOver();
+  stopBgm(1.4);
   document.getElementById('pauseBtn').style.display = 'none';
   document.getElementById('bossHud').classList.remove('active');
   setTimeout(()=>showResults(false), 1200);
@@ -76,6 +78,7 @@ function gameOver(){
 function showVictory(){
   state.mode = 'victory';
   sfx.victory();
+  stopBgm(2.0);
   document.getElementById('pauseBtn').style.display = 'none';
   document.getElementById('bossHud').classList.remove('active');
   showResults(true);
@@ -195,9 +198,11 @@ export function wireUI(){
   document.getElementById('pauseBtn').addEventListener('click', ()=>{
     if (state.mode === 'playing' || state.mode === 'bossBattle'){
       state._paused = state.mode; state.mode = 'paused';
+      pauseBgm();
       document.getElementById('pauseBtn').textContent = '▶';
     } else if (state.mode === 'paused'){
       state.mode = state._paused || 'playing';
+      resumeBgm();
       document.getElementById('pauseBtn').textContent = 'II';
     }
   });

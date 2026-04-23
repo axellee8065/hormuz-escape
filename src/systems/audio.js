@@ -216,3 +216,175 @@ export const sfx = {
     }));
   },
 };
+
+// ---------- BGM ----------
+// Procedural looping track. Two modes: 'normal' (exploration) and 'boss'
+// (driving). Uses Web Audio scheduling with a setInterval lookahead.
+
+const BGM_VOL = 0.20;
+let bgmMode = null;
+let bgmGain = null;
+let bgmTimerId = null;
+let bgmNextT = 0;
+let bgmStep = 0;
+
+function ensureBgmGain(){
+  if (bgmGain) return bgmGain;
+  if (!ensureCtx()) return null;
+  bgmGain = ctx.createGain();
+  bgmGain.gain.value = 0;
+  bgmGain.connect(master);
+  return bgmGain;
+}
+
+function noteFreq(midi){ return 440 * Math.pow(2, (midi - 69) / 12); }
+
+// [bassMidi, arpMidi[]] per bar. Arp length == stepsPerBar (8).
+const BGM = {
+  normal: {
+    bpm: 102, stepsPerBar: 8,
+    chords: [
+      [ 45, [57, 60, 64, 67, 64, 60, 64, 57] ],  // Am
+      [ 41, [53, 57, 60, 65, 60, 57, 60, 53] ],  // F
+      [ 43, [55, 59, 62, 67, 62, 59, 62, 55] ],  // G
+      [ 40, [52, 55, 59, 64, 59, 55, 59, 52] ],  // Em
+    ],
+  },
+  boss: {
+    bpm: 132, stepsPerBar: 8,
+    chords: [
+      [ 33, [57, 60, 64, 69, 72, 69, 64, 60] ],  // Am (driving)
+      [ 28, [52, 56, 59, 64, 68, 64, 59, 56] ],  // E7
+    ],
+  },
+};
+
+function bgmNote(time, freq, dur, type, vol){
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(vol, time + 0.006);
+  gain.gain.exponentialRampToValueAtTime(0.0005, time + dur);
+  osc.connect(gain); gain.connect(bgmGain);
+  osc.start(time);
+  osc.stop(time + dur + 0.05);
+}
+
+function bgmKick(time, vol = 0.42){
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(130, time);
+  osc.frequency.exponentialRampToValueAtTime(42, time + 0.13);
+  gain.gain.setValueAtTime(vol, time);
+  gain.gain.exponentialRampToValueAtTime(0.0005, time + 0.18);
+  osc.connect(gain); gain.connect(bgmGain);
+  osc.start(time); osc.stop(time + 0.2);
+}
+
+function bgmHat(time, vol = 0.09){
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(0.05);
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'highpass'; filter.frequency.value = 7000;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(vol, time);
+  gain.gain.exponentialRampToValueAtTime(0.0005, time + 0.04);
+  src.connect(filter); filter.connect(gain); gain.connect(bgmGain);
+  src.start(time); src.stop(time + 0.06);
+}
+
+function pumpBgm(){
+  if (!ctx || !bgmMode) return;
+  const pat = BGM[bgmMode];
+  const stepDur = (60 / pat.bpm) / 2;   // 8th notes
+  const SPB = pat.stepsPerBar;
+
+  while (bgmNextT < ctx.currentTime + 0.25){
+    const chordIdx = Math.floor(bgmStep / SPB) % pat.chords.length;
+    const inBar = bgmStep % SPB;
+    const [bassMidi, arp] = pat.chords[chordIdx];
+
+    // Arpeggio every 8th
+    bgmNote(bgmNextT, noteFreq(arp[inBar]), stepDur * 0.85, 'triangle', 0.09);
+
+    // Bass at start of each chord (hold for full bar)
+    if (inBar === 0){
+      bgmNote(bgmNextT, noteFreq(bassMidi), stepDur * SPB * 0.95, 'sawtooth', 0.13);
+    }
+
+    // Kick: normal on beats 1 & 3; boss on every beat (0,2,4,6)
+    if (bgmMode === 'normal'){
+      if (inBar === 0 || inBar === 4) bgmKick(bgmNextT);
+    } else {
+      if (inBar % 2 === 0) bgmKick(bgmNextT, 0.36);
+    }
+
+    // Hi-hat on off-beats (odd steps)
+    if (inBar % 2 === 1) bgmHat(bgmNextT);
+
+    bgmNextT += stepDur;
+    bgmStep++;
+  }
+}
+
+export function startBgm(mode){
+  if (!ensureCtx()) return;
+  if (bgmMode === mode) return;
+  const bg = ensureBgmGain();
+  if (!bg) return;
+  const switching = bgmMode !== null;
+  bgmMode = mode;
+  bgmStep = 0;
+  bgmNextT = ctx.currentTime + (switching ? 0.2 : 0.05);
+
+  const now = ctx.currentTime;
+  bg.gain.cancelScheduledValues(now);
+  bg.gain.setValueAtTime(bg.gain.value, now);
+  if (switching){
+    // dip + back up to hide mode change
+    bg.gain.linearRampToValueAtTime(0, now + 0.15);
+    bg.gain.linearRampToValueAtTime(muted ? 0 : BGM_VOL, now + 0.7);
+  } else {
+    bg.gain.linearRampToValueAtTime(muted ? 0 : BGM_VOL, now + 1.1);
+  }
+
+  if (!bgmTimerId) bgmTimerId = setInterval(pumpBgm, 50);
+}
+
+export function stopBgm(fadeSec = 1.2){
+  if (!bgmMode) return;
+  if (bgmGain && ctx){
+    const now = ctx.currentTime;
+    bgmGain.gain.cancelScheduledValues(now);
+    bgmGain.gain.setValueAtTime(bgmGain.gain.value, now);
+    bgmGain.gain.linearRampToValueAtTime(0, now + fadeSec);
+  }
+  bgmMode = null;
+  if (bgmTimerId){
+    const tid = bgmTimerId;
+    bgmTimerId = null;
+    setTimeout(() => clearInterval(tid), fadeSec * 1000 + 50);
+  }
+}
+
+export function pauseBgm(){
+  if (!bgmMode || !ctx || !bgmGain) return;
+  if (bgmTimerId){ clearInterval(bgmTimerId); bgmTimerId = null; }
+  const now = ctx.currentTime;
+  bgmGain.gain.cancelScheduledValues(now);
+  bgmGain.gain.setValueAtTime(bgmGain.gain.value, now);
+  bgmGain.gain.linearRampToValueAtTime(0, now + 0.12);
+}
+
+export function resumeBgm(){
+  if (!bgmMode || bgmTimerId || !ctx || !bgmGain) return;
+  bgmNextT = ctx.currentTime + 0.05;
+  const now = ctx.currentTime;
+  bgmGain.gain.cancelScheduledValues(now);
+  bgmGain.gain.setValueAtTime(bgmGain.gain.value, now);
+  bgmGain.gain.linearRampToValueAtTime(muted ? 0 : BGM_VOL, now + 0.25);
+  bgmTimerId = setInterval(pumpBgm, 50);
+}
